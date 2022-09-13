@@ -1,7 +1,7 @@
 @empty(!$title)
     <fieldset>
             <div class="col p-0 px-3">
-                <legend class="text-black">
+                <legend class="text-black text-black mt-2 mx-2">
                     {{ $title }}
                 </legend>
             </div>
@@ -33,7 +33,7 @@
             @foreach($rows as $source)
                 <tr>
                     @foreach($columns as $column)
-                        {!! $column->buildTd($source) !!}
+                        {!! $column->buildTd($source, $loop->parent) !!}
                     @endforeach
                 </tr>
             @endforeach
@@ -41,7 +41,7 @@
             @if($total->isNotEmpty())
                 <tr>
                     @foreach($total as $column)
-                        {!! $column->buildTd($repository) !!}
+                        {!! $column->buildTd($repository, $loop) !!}
                     @endforeach
                 </tr>
             @endif

@@ -7,12 +7,14 @@ namespace Orchid\Tests\App;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Orchid\Platform\Dashboard;
+use Orchid\Tests\App\Fields\BaseSelectScreen;
 use Orchid\Tests\App\Screens\AsyncHeaderButtonActionScreen;
 use Orchid\Tests\App\Screens\ConfirmScreen;
 use Orchid\Tests\App\Screens\DependentListenerModalScreen;
 use Orchid\Tests\App\Screens\DependentListenerScreen;
 use Orchid\Tests\App\Screens\MethodsResponseScreen;
 use Orchid\Tests\App\Screens\ModalValidationScreen;
+use Orchid\Tests\App\Screens\ModelAutoOpenScreen;
 use Orchid\Tests\App\Screens\NestedTargetsDependentSumListenerScreen;
 use Orchid\Tests\App\Screens\PropertyAutoWriteScreen;
 
@@ -35,6 +37,7 @@ class ExemplarServiceProvider extends ServiceProvider
             ->as('test.')
             ->group(function ($route) {
                 $route->screen('modal-validation', ModalValidationScreen::class)->name('modal-validation');
+                $route->screen('modal-open', ModelAutoOpenScreen::class)->name('modal-open');
                 $route->screen('dependent-listener-nested-targets', NestedTargetsDependentSumListenerScreen::class)->name('dependent-listener-nested-targets');
                 $route->screen('dependent-listener', DependentListenerScreen::class)->name('dependent-listener');
                 $route->screen('dependent-listener-modal', DependentListenerModalScreen::class)->name('dependent-listener-modal');
@@ -42,6 +45,10 @@ class ExemplarServiceProvider extends ServiceProvider
                 $route->screen('confirm', ConfirmScreen::class)->name('confirm');
                 $route->screen('async-header-button-action', AsyncHeaderButtonActionScreen::class)->name('async-header-button-action');
                 $route->screen('write-only-public-property', PropertyAutoWriteScreen::class)->name('write-only-public-property');
+
+
+                // Fields
+                $route->screen('fields/base-select-screen', BaseSelectScreen::class)->name('base-select-screen');
             });
     }
 }

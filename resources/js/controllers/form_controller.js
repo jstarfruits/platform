@@ -90,7 +90,11 @@ export default class extends ApplicationController {
      */
     validateForm(event) {
         // Cancellation
-        if (this.getActiveElementAttr('data-novalidate') === 'true') {
+        if (
+            this.getActiveElementAttr('data-novalidate') === 'true'
+            || this.getActiveElementAttr('formnovalidate') === 'true'
+            || this.getActiveElementAttr('formnovalidate') === 'formnovalidate'
+        ) {
             return true;
         }
 
@@ -98,7 +102,7 @@ export default class extends ApplicationController {
 
         if (!event.target.reportValidity()) {
             this.alert('Validation error', message);
-
+            event.target.classList.add('was-validated');
             return false;
         }
 

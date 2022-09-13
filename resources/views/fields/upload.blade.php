@@ -1,7 +1,7 @@
 @component($typeForm, get_defined_vars())
     <div
         data-controller="upload"
-        data-upload-storage="{{$storage ?? 'public'}}"
+        data-upload-storage="{{$storage ?? config('platform.attachment.disk', 'public')}}"
         data-upload-name="{{$name}}"
         data-upload-id="dropzone-{{$id}}"
         data-upload-data='@json($value)'
@@ -17,6 +17,7 @@
         data-upload-is-media-library="{{ $media }}"
         data-upload-close-on-add="{{ $closeOnAdd }}"
         data-upload-resize-height="{{$resizeHeight }}"
+        data-upload-path="{{ $attributes['path'] ?? '' }}"
     >
         <div id="dropzone-{{$id}}" class="dropzone-wrapper">
             <div class="fallback">
@@ -64,23 +65,23 @@
                         <div class="modal-body p-4">
                             <div class="form-group">
                                 <label>{{__('System name')}}</label>
-                                <input type="text" class="form-control" data-target="upload.name" readonly
+                                <input type="text" class="form-control" data-upload-target="name" readonly
                                        maxlength="255">
                             </div>
                             <div class="form-group">
                                 <label>{{ __('Display name') }}</label>
-                                <input type="text" class="form-control" data-target="upload.original"
+                                <input type="text" class="form-control" data-upload-target="original"
                                        maxlength="255" placeholder="{{ __('Display name') }}">
                             </div>
                             <div class="form-group">
                                 <label>{{ __('Alternative text') }}</label>
-                                <input type="text" class="form-control" data-target="upload.alt"
+                                <input type="text" class="form-control" data-upload-target="alt"
                                        maxlength="255" placeholder="{{  __('Alternative text')  }}">
                             </div>
                             <div class="form-group">
                                 <label>{{ __('Description') }}</label>
                                 <textarea class="form-control no-resize"
-                                          data-target="upload.description"
+                                          data-upload-target="description"
                                           placeholder="{{ __('Description') }}"
                                           maxlength="255"
                                           rows="3"></textarea>
@@ -138,7 +139,7 @@
                                         <div class="form-group">
                                             <label>{{__('Search file')}}</label>
                                             <input type="search"
-                                                   data-target="upload.search"
+                                                   data-upload-target="search"
                                                    data-action="keydown->upload#resetPage keydown->upload#loadMedia"
                                                    class="form-control"
                                                    placeholder="{{ __('Search...') }}"

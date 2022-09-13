@@ -1,12 +1,13 @@
 @component($typeForm, get_defined_vars())
     <div data-controller="picture"
          data-picture-value="{{ $attributes['value'] }}"
-         data-picture-storage="{{ $storage ?? 'public' }}"
+         data-picture-storage="{{ $storage ?? config('platform.attachment.disk', 'public') }}"
          data-picture-target="{{ $target }}"
          data-picture-url="{{ $url }}"
          data-picture-max-file-size="{{ $maxFileSize }}"
          data-picture-accepted-files="{{ $acceptedFiles }}"
          data-picture-groups="{{$attributes['groups'] ?? ''}}"
+         data-picture-path="{{ $attributes['path'] ?? '' }}"
     >
         <div class="border-dashed text-end p-3 picture-actions">
 
@@ -23,7 +24,7 @@
                     {{ __('Browse') }}
                     <input type="file"
                            accept="image/*"
-                           data-target="picture.upload"
+                           data-picture-target="upload"
                            data-action="change->picture#upload"
                            class="d-none">
                 </label>
@@ -39,7 +40,7 @@
 
         <input class="picture-path d-none"
                type="text"
-               data-target="picture.source"
+               data-picture-target="source"
                {{ $attributes }}
         >
     </div>

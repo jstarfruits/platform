@@ -85,6 +85,8 @@ class Cropper extends Picture
         'value',
         'target',
         'url',
+        'groups',
+        'path',
     ];
 
     /**

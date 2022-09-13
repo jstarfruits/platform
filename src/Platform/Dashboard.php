@@ -18,7 +18,7 @@ class Dashboard
     /**
      * ORCHID Version.
      */
-    public const VERSION = '12.1.0';
+    public const VERSION = '13.2.0';
 
     /**
      * Slug for main menu.
@@ -261,11 +261,15 @@ class Dashboard
     }
 
     /**
+     * @param array|string $groups
+     *
      * @return Collection
      */
-    public function getPermission(): Collection
+    public function getPermission($groups = []): Collection
     {
-        $all = $this->permission->get('all');
+        $all = $this->permission->get('all')
+            ->when(! empty($groups), fn (Collection $collection) => $collection->only($groups));
+
         $removed = $this->permission->get('removed');
 
         if (! $removed->count()) {
@@ -286,11 +290,13 @@ class Dashboard
     /**
      * Get all registered permissions with the enabled state.
      *
+     * @param array|string $groups
+     *
      * @return Collection
      */
-    public function getAllowAllPermission(): Collection
+    public function getAllowAllPermission($groups = []): Collection
     {
-        return $this->getPermission()
+        return $this->getPermission($groups)
             ->collapse()
             ->reduce(static function (Collection $permissions, array $item) {
                 return $permissions->put($item['slug'], true);

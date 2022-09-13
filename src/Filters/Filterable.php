@@ -33,16 +33,14 @@ trait Filterable
      * Apply the filter to the given selection.
      *
      * @param Builder          $query
-     * @param string|Selection $selection
-     *
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @param string|Selection $class
      *
      * @return Builder
      */
-    public function scopeFiltersApplySelection(Builder $query, $selection): Builder
+    public function scopeFiltersApplySelection(Builder $query, $class): Builder
     {
         /** @var Selection $selection */
-        $selection = is_object($selection) ? $selection : resolve($selection);
+        $selection = is_object($class) ? $class : resolve($class);
 
         $filters = $selection->filters();
 
@@ -50,17 +48,24 @@ trait Filterable
     }
 
     /**
-     * @param Builder         $builder
-     * @param HttpFilter|null $httpFilter
+     * @param Builder                   $builder
+     * @param iterable|string|Selection $kit
+     * @param HttpFilter|null           $httpFilter
      *
      * @return Builder
      */
-    public function scopeFilters(Builder $builder, HttpFilter $httpFilter = null): Builder
+    public function scopeFilters(Builder $builder, mixed $kit = null, HttpFilter $httpFilter = null): Builder
     {
         $filter = $httpFilter ?? new HttpFilter();
         $filter->build($builder);
 
-        return $builder;
+        if ($kit === null) {
+            return $builder;
+        }
+
+        return is_iterable($kit)
+            ? $this->scopeFiltersApply($builder, $kit)
+            : $this->scopeFiltersApplySelection($builder, $kit);
     }
 
     /**

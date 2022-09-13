@@ -26,6 +26,7 @@ use Orchid\Screen\Field;
  * @method Select options($value = null)
  * @method Select title(string $value = null)
  * @method Select maximumSelectionLength(int $value = 0)
+ * @method Select allowAdd($value = true)
  */
 class Select extends Field implements ComplexFieldConcern
 {
@@ -42,8 +43,10 @@ class Select extends Field implements ComplexFieldConcern
      * @var array
      */
     protected $attributes = [
-        'class'   => 'form-control',
-        'options' => [],
+        'class'      => 'form-control',
+        'options'    => [],
+        'allowEmpty' => '',
+        'allowAdd'   => false,
     ];
 
     /**
@@ -58,6 +61,7 @@ class Select extends Field implements ComplexFieldConcern
         'form',
         'name',
         'required',
+        'placeholder',
         'size',
         'tabindex',
         'tags',
@@ -140,9 +144,13 @@ class Select extends Field implements ComplexFieldConcern
             $value = [$key => $name] + $options;
 
             $this->set('options', $value);
+            $this->set('allowEmpty', '1');
         });
     }
 
+    /**
+     * @return self
+     */
     public function taggable()
     {
         return $this->set('tags', true);

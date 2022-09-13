@@ -8,6 +8,7 @@ use App\Orchid\Layouts\Role\RolePermissionLayout;
 use App\Orchid\Layouts\User\UserEditLayout;
 use App\Orchid\Layouts\User\UserPasswordLayout;
 use App\Orchid\Layouts\User\UserRoleLayout;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -84,7 +85,7 @@ class UserEditScreen extends Screen
         return [
             Button::make(__('Impersonate user'))
                 ->icon('login')
-                ->confirm('You can revert to your original state by logging out.')
+                ->confirm(__('You can revert to your original state by logging out.'))
                 ->method('loginAs')
                 ->canSee($this->user->exists && \request()->user()->id !== $this->user->id),
 
@@ -176,19 +177,13 @@ class UserEditScreen extends Screen
             ->collapse()
             ->toArray();
 
-        $userData = $request->get('user');
-        if ($user->exists && (string) $userData['password'] === '') {
-            // When updating existing user null password means "do not change current password"
-            unset($userData['password']);
-        } else {
-            $userData['password'] = Hash::make($userData['password']);
-        }
+        $user->when($request->filled('user.password'), function (Builder $builder) use ($request) {
+            $builder->getModel()->password = Hash::make($request->input('user.password'));
+        });
 
         $user
-            ->fill($userData)
-            ->fill([
-                'permissions' => $permissions,
-            ])
+            ->fill($request->collect('user')->except(['password', 'permissions', 'roles'])->toArray())
+            ->fill(['permissions' => $permissions])
             ->save();
 
         $user->replaceRoles($request->input('user.roles'));

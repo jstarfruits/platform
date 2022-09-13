@@ -35,7 +35,7 @@ use Throwable;
 class Field implements Fieldable, Htmlable
 {
     use CanSee, Makeable, Conditionable, Macroable {
-        __call as macroCall;
+        Macroable::__call as macroCall;
     }
 
     /**
@@ -382,7 +382,7 @@ class Field implements Fieldable, Htmlable
     /**
      * @return static
      */
-    protected function modifyValue()
+    protected function modifyValue(): self
     {
         $value = $this->getOldValue() ?? $this->get('value');
 
