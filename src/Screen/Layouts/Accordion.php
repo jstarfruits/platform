@@ -18,6 +18,13 @@ abstract class Accordion extends Layout
     protected $template = 'platform::layouts.accordion';
 
     /**
+     * @var array
+     */
+    protected $variables = [
+        'stayOpen' => false,
+    ];
+
+    /**
      * Layout constructor.
      *
      * @param Layout[] $layouts
@@ -28,12 +35,24 @@ abstract class Accordion extends Layout
     }
 
     /**
-     * @param Repository $repository
-     *
      * @return mixed
      */
     public function build(Repository $repository)
     {
         return $this->buildAsDeep($repository);
+    }
+
+    /**
+     * Make accordion items stay open when another item is opened.
+     *
+     * @param bool $stayOpen
+     *
+     * @return $this
+     */
+    public function stayOpen(bool $stayOpen = true): self
+    {
+        $this->variables['stayOpen'] = $stayOpen;
+
+        return $this;
     }
 }

@@ -21,6 +21,7 @@ export default class extends ApplicationController {
         this.choices = new TomSelect(select, {
             create: this.data.get('allow-add') === 'true',
             allowEmptyOption: true,
+            maxOptions: 'null',
             placeholder: select.getAttribute('placeholder') === 'false' ? '' : select.getAttribute('placeholder'),
             preload: true,
             plugins,
@@ -30,6 +31,10 @@ export default class extends ApplicationController {
                 no_results: () => `<div class="no-results">${this.data.get('message-notfound')}</div>`,
             },
             onDelete: () => !! this.data.get('allow-empty'),
+            onItemAdd: function() {
+                this.setTextboxValue('');
+                this.refreshOptions(false);
+            }
         });
     }
 
@@ -37,6 +42,6 @@ export default class extends ApplicationController {
      *
      */
     disconnect() {
-        this.choices.destroy();
+        this.choices?.destroy();
     }
 }

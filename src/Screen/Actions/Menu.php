@@ -89,7 +89,7 @@ class Menu extends Link
 
                 $this
                     ->set('data-bs-toggle', 'collapse')
-                    ->set('href', '#menu-' . $slug);
+                    ->set('href', '#menu-'.$slug);
             })
             ->addBeforeRender(function () {
                 if ($this->get('active') !== null) {
@@ -98,27 +98,20 @@ class Menu extends Link
 
                 $active = collect([])
                     ->merge($this->get('list'))
-                    ->map(function (Menu $menu) {
-                        return $menu->get('href');
-                    })
+                    ->map(fn (Menu $menu) => $menu->get('href'))
                     ->push($this->get('href'))
                     ->filter()
-                    ->map(function ($href) {
-                        return [
-                            $href,
-                            $href . '?*',
-                            $href . '/*',
-                        ];
-                    })
+                    ->map(fn ($href) => [
+                        $href,
+                        $href.'?*',
+                        $href.'/*',
+                    ])
                     ->flatten();
 
                 $this->set('active', $active->toArray());
             });
     }
 
-    /**
-     * @return string
-     */
     protected function getSlug(): string
     {
         return $this->get('slug', Str::slug(__($this->get('name'))));
@@ -136,22 +129,17 @@ class Menu extends Link
         $subMenu = collect()
             ->merge($default)
             ->merge($list)
-            ->sort(function (Menu $menu) {
-                return $menu->get('sort', 0);
-            });
+            ->sort(fn (Menu $menu) => $menu->get('sort', 0));
 
         return $this->set('list', $subMenu);
     }
 
     /**
-     * @param Repository|null $repository
-     *
      * @throws \Throwable
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View|mixed
-     *
      */
-    public function build(Repository $repository = null)
+    public function build(?Repository $repository = null)
     {
         $this->set('source', $repository);
 
@@ -159,15 +147,12 @@ class Menu extends Link
     }
 
     /**
-     * @param \Closure   $badge
-     * @param Color|null $color
-     *
      * @return $this
      */
-    public function badge(\Closure $badge, Color $color = null): self
+    public function badge(\Closure $badge, Color $color = Color::PRIMARY): self
     {
         $this->set('badge', [
-            'class' => $color ?? Color::PRIMARY(),
+            'class' => $color->name(),
             'data'  => $badge,
         ]);
 
@@ -175,8 +160,6 @@ class Menu extends Link
     }
 
     /**
-     * @param string $url
-     *
      * @return $this
      */
     public function url(string $url): self
@@ -206,17 +189,12 @@ class Menu extends Link
         return $this;
     }
 
-    /**
-     * @return bool
-     */
     public function isSee(): bool
     {
         return parent::isSee() && $this->permit;
     }
 
     /**
-     * @param string|null $title
-     *
      * @return $this
      */
     public function title(?string $title = null): self
@@ -225,8 +203,6 @@ class Menu extends Link
     }
 
     /**
-     * @param string $slug
-     *
      * @return $this
      */
     public function slug(string $slug): self
@@ -235,8 +211,6 @@ class Menu extends Link
     }
 
     /**
-     * @param string $parent
-     *
      * @return $this
      */
     public function parent(string $parent): self

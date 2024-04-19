@@ -6,6 +6,7 @@ namespace Orchid\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Orchid\Screen\Field;
 
 abstract class Filter
@@ -25,20 +26,6 @@ abstract class Filter
     public $parameters;
 
     /**
-     * Sets the value to hide/show the filter in the selection.
-     *
-     * @var bool
-     */
-    public $display = true;
-
-    /**
-     * Current app language.
-     *
-     * @var string
-     */
-    public $lang;
-
-    /**
      * The value delimiter.
      *
      * @var string
@@ -51,29 +38,18 @@ abstract class Filter
     public function __construct()
     {
         $this->request = request();
-        $this->lang = app()->getLocale();
     }
 
     /**
      * Apply filter if the request parameters were satisfied.
-     *
-     * @param Builder $builder
-     *
-     * @return Builder
      */
     public function filter(Builder $builder): Builder
     {
-        $when = empty($this->parameters()) || $this->request->hasAny($this->parameters());
-
-        return $builder->when($when, function (Builder $builder) {
-            return $this->run($builder);
-        });
+        return $builder->when($this->isApply(), fn (Builder $builder) => $this->run($builder));
     }
 
     /**
      * The array of matched parameters.
-     *
-     * @return array|null
      */
     public function parameters(): ?array
     {
@@ -82,10 +58,6 @@ abstract class Filter
 
     /**
      * Apply to a given Eloquent query builder.
-     *
-     * @param Builder $builder
-     *
-     * @return Builder
      */
     abstract public function run(Builder $builder): Builder;
 
@@ -101,28 +73,19 @@ abstract class Filter
 
     /**
      * The displayable name of the filter.
-     *
-     * @return string
      */
     public function name(): string
     {
         return class_basename(static::class);
     }
 
-    /**
-     * @return string
-     */
     public function render(): string
     {
-        return collect($this->display())->reduce(static function ($html, Field $field) {
-            return $html.$field->form('filters')->render();
-        });
+        return collect($this->display())->reduce(static fn ($html, Field $field) => $html.$field->form('filters')->render());
     }
 
     /**
      * Count fields in the filter.
-     *
-     * @return int
      */
     public function count(): int
     {
@@ -131,18 +94,30 @@ abstract class Filter
 
     /**
      * Whether there are suitable parameters in the query to apply the filter.
-     *
-     * @return bool
      */
     public function isApply(): bool
     {
-        return count($this->request->only($this->parameters(), [])) > 0;
+        $parameters = $this->parameters();
+
+        $when = empty($parameters)
+            || $this->request->hasAny($parameters)
+            || $this->request->collect()->dot()->keys()->filter(fn (string $name) => Str::of($name)->is($parameters))->isNotEmpty();
+
+        return $when;
+    }
+
+    /**
+     * Hide/show the filter in the selection
+     *
+     * @return bool
+     */
+    public function isDisplay(): bool
+    {
+        return ! empty($this->display());
     }
 
     /**
      * Value to be displayed
-     *
-     * @return string
      */
     public function value(): string
     {
@@ -154,8 +129,6 @@ abstract class Filter
 
     /**
      * Link without filters applied
-     *
-     * @return string
      */
     public function resetLink(): string
     {

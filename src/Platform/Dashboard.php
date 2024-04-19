@@ -6,10 +6,13 @@ namespace Orchid\Platform;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use Orchid\Screen\Actions\Menu;
 use Orchid\Screen\Screen;
+use RuntimeException;
 
 class Dashboard
 {
@@ -18,24 +21,24 @@ class Dashboard
     /**
      * ORCHID Version.
      */
-    public const VERSION = '13.2.0';
+    public const VERSION = '14.22.0';
 
     /**
+     * @deprecated
+     *
      * Slug for main menu.
      */
     public const MENU_MAIN = 'Main';
-
-    /**
-     * Slug for dropdown profile.
-     */
-    public const MENU_PROFILE = 'Profile';
 
     /**
      * The Dashboard configuration options.
      *
      * @var array
      */
-    protected static $options = [];
+    protected static $options = [
+        'search' => [],
+        'models' => [],
+    ];
 
     /**
      * @var Collection
@@ -57,14 +60,18 @@ class Dashboard
     private $permission;
 
     /**
-     * @var Collection
-     */
-    private $search;
-
-    /**
      * @var Screen|null
      */
     private $currentScreen;
+
+    /**
+     * Determines whether the current request is a partial request or not.
+     * A partial request is a request that only loads a specific part of the page, such as a modal window or a section of content,
+     * instead of loading the entire page.
+     *
+     * @var bool Set to true if the current request is a partial request, false otherwise.
+     */
+    private bool $partialRequest = false;
 
     /**
      * Dashboard constructor.
@@ -78,15 +85,11 @@ class Dashboard
             'removed' => collect(),
         ]);
 
-        $this->search = collect();
-
         $this->flushState();
     }
 
     /**
      * Get the version number of the application.
-     *
-     * @return string
      */
     public static function version(): string
     {
@@ -94,11 +97,23 @@ class Dashboard
     }
 
     /**
+     * Determine published assets are up-to-date.
+     *
+     * @throws \RuntimeException
+     *
+     * @return bool
+     */
+    public static function assetsAreCurrent()
+    {
+        $publishedPath = public_path('vendor/orchid/mix-manifest.json');
+
+        throw_unless(File::exists($publishedPath), new RuntimeException('Orchid assets are not published. Please run: `php artisan orchid:publish`'));
+
+        return File::get($publishedPath) === File::get(__DIR__.'/../../public/mix-manifest.json');
+    }
+
+    /**
      * Get the route with the dashboard prefix.
-     *
-     * @param string $path
-     *
-     * @return string
      */
     public static function prefix(string $path = ''): string
     {
@@ -109,10 +124,6 @@ class Dashboard
 
     /**
      * Configure the Dashboard application.
-     *
-     * @param array $options
-     *
-     * @return void
      */
     public static function configure(array $options): void
     {
@@ -122,7 +133,6 @@ class Dashboard
     /**
      * Get a Dashboard configuration option.
      *
-     * @param string     $key
      * @param mixed|null $default
      *
      * @return mixed
@@ -133,12 +143,9 @@ class Dashboard
     }
 
     /**
-     * @param string      $key
-     * @param string|null $default
-     *
      * @return mixed
      */
-    public static function modelClass(string $key, string $default = null)
+    public static function modelClass(string $key, ?string $default = null)
     {
         $model = static::model($key, $default);
 
@@ -147,22 +154,14 @@ class Dashboard
 
     /**
      * Get the class name for a given Dashboard model.
-     *
-     * @param string      $key
-     * @param string|null $default
-     *
-     * @return string
      */
-    public static function model(string $key, string $default = null): string
+    public static function model(string $key, ?string $default = null): string
     {
         return Arr::get(static::$options, 'models.'.$key, $default ?? $key);
     }
 
     /**
      * Get the user model class name.
-     *
-     * @param string $key
-     * @param string $custom
      */
     public static function useModel(string $key, string $custom): void
     {
@@ -171,10 +170,6 @@ class Dashboard
 
     /**
      * The real path to the package files.
-     *
-     * @param string $path
-     *
-     * @return string
      */
     public static function path(string $path = ''): string
     {
@@ -186,7 +181,6 @@ class Dashboard
     /**
      * Registers a ItemPermission that defines authentication permissions.
      *
-     * @param ItemPermission $permission
      *
      * @return $this
      */
@@ -208,22 +202,17 @@ class Dashboard
     /**
      * Registers a set of models for which full-text search is required.
      *
-     * @param array $model
-     *
      * @return $this
      */
-    public function registerSearch(array $model): self
+    public function registerSearch(array $models): self
     {
-        $this->search = $this->search->merge($model);
+        static::$options['search'] = array_merge($models, static::$options['search'] ?? []);
 
         return $this;
     }
 
     /**
-     * @param string       $key
      * @param string|array $value
-     *
-     * @return Dashboard
      */
     public function registerResource(string $key, $value): self
     {
@@ -250,20 +239,15 @@ class Dashboard
         return $this->resources->get($key);
     }
 
-    /**
-     * @return Collection
-     */
     public function getSearch(): Collection
     {
-        return $this->search->transform(static function ($model) {
-            return is_object($model) ? $model : resolve($model);
-        });
+        return collect(static::$options['search'])
+            ->unique()
+            ->transform(static fn ($model) => is_object($model) ? $model : resolve($model));
     }
 
     /**
      * @param array|string $groups
-     *
-     * @return Collection
      */
     public function getPermission($groups = []): Collection
     {
@@ -291,21 +275,15 @@ class Dashboard
      * Get all registered permissions with the enabled state.
      *
      * @param array|string $groups
-     *
-     * @return Collection
      */
     public function getAllowAllPermission($groups = []): Collection
     {
         return $this->getPermission($groups)
             ->collapse()
-            ->reduce(static function (Collection $permissions, array $item) {
-                return $permissions->put($item['slug'], true);
-            }, collect());
+            ->reduce(static fn (Collection $permissions, array $item) => $permissions->put($item['slug'], true), collect());
     }
 
     /**
-     * @param string $key
-     *
      * @return $this
      */
     public function removePermission(string $key): self
@@ -316,40 +294,51 @@ class Dashboard
     }
 
     /**
-     * @param Screen $screen
-     *
      * @return $this
      */
-    public function setCurrentScreen(Screen $screen): self
+    public function setCurrentScreen(Screen $screen, bool $partialRequest = false): self
     {
         $this->currentScreen = $screen;
+        $this->partialRequest = $partialRequest;
+
+        App::singleton($screen::class, static fn () => $screen);
+        App::rebinding($screen::class, static fn () => app($screen::class));
 
         return $this;
     }
 
-    /**
-     * @return Screen|null
-     */
     public function getCurrentScreen(): ?Screen
     {
         return $this->currentScreen;
     }
 
     /**
+     * Determines whether the current request is a partial request or not.
+     *
+     * A partial request is a request that only loads a specific part of the page, such as a modal window or a section of content,
+     * instead of loading the entire page. This method returns a boolean value indicating whether the current request is a partial
+     * request or not, based on the value of the $partialRequest property.
+     *
+     * @return bool True if the current request is a partial request, false otherwise.
+     */
+    public function isPartialRequest(): bool
+    {
+        return $this->partialRequest;
+    }
+
+    /**
      * Adding a new element to the menu.
      *
-     * @param string                      $location
-     * @param \Orchid\Screen\Actions\Menu $menu
      *
      * @return $this
      */
-    public function registerMenuElement(string $location, \Orchid\Screen\Actions\Menu $menu): Dashboard
+    public function registerMenuElement(Menu $menu): Dashboard
     {
         if ($menu->get('sort', 0) === 0) {
-            $menu->sort($this->menu->get($location)->count() + 1);
+            $menu->sort($this->menu->get(self::MENU_MAIN)->count() + 1);
         }
 
-        $this->menu->get($location)->add($menu);
+        $this->menu->get(self::MENU_MAIN)->add($menu);
 
         return $this;
     }
@@ -357,67 +346,47 @@ class Dashboard
     /**
      * Generate on the menu display.
      *
-     * @param string $location
      *
      * @throws \Throwable
-     *
-     * @return string
      */
-    public function renderMenu(string $location): string
+    public function renderMenu(): string
     {
-        return $this->menu->get($location)
-            ->sort(function (Menu $current, Menu $next) {
-                return $current->get('sort', 0) <=> $next->get('sort', 0);
-            })
-            ->map(function (Menu $menu) {
-                return (string)$menu->render();
-            })
+        return $this->menu->get(self::MENU_MAIN)
+            ->sort(fn (Menu $current, Menu $next) => $current->get('sort', 0) <=> $next->get('sort', 0))
+            ->map(fn (Menu $menu) => (string) $menu->render())
             ->implode('');
     }
 
-    /**
-     * @param string $location
-     *
-     * @return bool
-     */
-    public function isEmptyMenu(string $location):bool
+    public function isEmptyMenu(): bool
     {
-        return $this->menu->get($location)->isEmpty();
+        return $this->menu->get(self::MENU_MAIN)->isEmpty();
     }
 
     /**
-     * @param string $location
-     * @param string $slug
      * @param Menu[] $list
-     *
-     * @return Dashboard
      */
-    public function addMenuSubElements(string $location, string $slug, array $list): Dashboard
+    public function addMenuSubElements(string $slug, array $list): Dashboard
     {
-        $menu = $this->menu->get($location)
-            ->map(function (Menu $menu) use ($slug, $list) {
-                return $menu->get('slug') === $slug
-                    ? $menu->list($list)
-                    : $menu;
-            });
+        $menu = $this->menu->get(self::MENU_MAIN)
+            ->map(fn (Menu $menu) => $slug === $menu->get('slug')
+                ? $menu->list($list)
+                : $menu);
 
-        $this->menu->put($location, $menu);
+        $this->menu->put(self::MENU_MAIN, $menu);
 
         return $this;
     }
 
     /**
      * Flush the persistent Orchid state.
-     *
-     * @return void
      */
     public function flushState(): void
     {
         $this->menu = collect([
             self::MENU_MAIN    => collect(),
-            self::MENU_PROFILE => collect(),
         ]);
 
         $this->currentScreen = null;
+        $this->partialRequest = false;
     }
 }

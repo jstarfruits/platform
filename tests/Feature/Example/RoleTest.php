@@ -50,19 +50,20 @@ class RoleTest extends TestFeatureCase
             ->get(route('platform.systems.roles.edit', $this->role->id));
 
         $response->assertOk()
-        ->assertSee('field-roles')
-        ->assertSee($this->role->name)
-        ->assertSee($this->role->slug);
+            ->assertSee('field-roles')
+            ->assertSee($this->role->name)
+            ->assertSee($this->role->slug);
     }
 
     public function testCanHaveStringPrimary(): void
     {
-        $StringPrimaryClass = new class extends Role {
+        $StringPrimaryClass = new class extends Role
+        {
             protected $keyType = 'string';
         };
 
         $role = $StringPrimaryClass::make([
-            'id'          => Str::uuid(),
+            'id'          => Str::uuid()->toString(),
             'slug'        => 'uuid-test',
             'name'        => 'UUID',
             'permissions' => [],

@@ -17,14 +17,12 @@ class BaseSelectScreen extends BaseFieldScreen
     public function query(): array
     {
         return [
-           'relationFromModelMultipleWithValue' => 1,
-       ];
+            'relationFromModelMultipleWithValue' => 1,
+        ];
     }
 
     /**
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
-     *
-     * @return array
      */
     public function fields(): array
     {

@@ -29,12 +29,10 @@ class AdminCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Create user administrator';
+    protected $description = 'Create or update admin user';
 
     /**
      * Execute the console command.
-     *
-     * @return void
      */
     public function handle(): void
     {
@@ -44,7 +42,7 @@ class AdminCommand extends Command
             empty($userId)
                 ? $this->createNewUser()
                 : $this->updateUserPermissions((string) $userId);
-        } catch (Exception | QueryException $e) {
+        } catch (Exception|QueryException $e) {
             $this->error($e->getMessage());
         }
     }
@@ -53,6 +51,11 @@ class AdminCommand extends Command
 		return $this->option('model') ?? User::class;
 	}
 
+    /**
+     * Create a new user administrator.
+     *
+     * @return void
+     */
     protected function createNewUser(): void
     {
         Dashboard::modelClass($this->userModel())
@@ -66,7 +69,11 @@ class AdminCommand extends Command
     }
 
     /**
+     * Update the permissions of an existing user.
+     *
      * @param string $id
+     *
+     * @return void
      */
     protected function updateUserPermissions(string $id): void
     {

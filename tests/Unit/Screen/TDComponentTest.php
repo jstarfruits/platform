@@ -88,13 +88,10 @@ class TDComponentTest extends TestUnitCase
             ->component('exemplar::simple-anonymous-component')
             ->buildTd($this->user);
 
-        $this->assertStringContainsString("property1: oops", $view);
-        $this->assertStringContainsString("property2: default value", $view);
+        $this->assertStringContainsString('property1: oops', $view);
+        $this->assertStringContainsString('property2: default value', $view);
     }
 
-    /**
-     * @param View $view
-     */
     protected function checkedArgument(View $view)
     {
         $this->assertStringContainsString("Hello {$this->user->email} from Sasha", $view);

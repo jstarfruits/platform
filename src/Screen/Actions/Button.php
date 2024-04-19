@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Orchid\Screen\Actions;
 
 use Orchid\Screen\Action;
+use Orchid\Support\Facades\Dashboard;
 
 /**
  * Class Button.
@@ -13,10 +14,9 @@ use Orchid\Screen\Action;
  * @method Button modal(string $modalName = null)
  * @method Button icon(string $icon = null)
  * @method Button class(string $classes = null)
- * @method Button parameters(array|object $name)
  * @method Button confirm(string $confirm = true)
  * @method Button action(string $url)
- * @method Button disabled(bool $disabled)
+ * @method Button disabled(bool $disabled = true)
  */
 class Button extends Action
 {
@@ -72,7 +72,9 @@ class Button extends Action
             }
 
             // correct URL for async request
-            $url = request()->header('ORCHID-ASYNC-REFERER', url()->current());
+            $url = Dashboard::isPartialRequest()
+                ? url()->previous()
+                : url()->current();
 
             $query = http_build_query($this->get('parameters'));
 
@@ -88,8 +90,6 @@ class Button extends Action
     }
 
     /**
-     * @param bool $novalidate
-     *
      * @return Button|\Orchid\Screen\Field
      */
     public function novalidate(bool $novalidate = true)
@@ -98,17 +98,48 @@ class Button extends Action
     }
 
     /**
-     * @param string $name
-     * @param array  $parameters
-     *
      * @return $this
      */
     public function method(string $name, array $parameters = []): self
     {
         return $this
             ->set('method', $name)
-            ->when(! empty($parameters), function () use ($parameters) {
-                $this->set('parameters', $parameters);
-            });
+            ->when(! empty($parameters), fn () => $this->parameters($parameters));
+    }
+
+    /**
+     * Sets the parameters for the action.
+     *
+     * @param array|object $parameters The array or object containing the parameters.
+     *
+     * @return $this
+     */
+    public function parameters(array|object $parameters): self
+    {
+        $parameters = is_array($parameters)
+            ? collect($parameters)->filter(fn ($value) => filled($value))->all()
+            : $parameters;
+
+        return $this->set('parameters', $parameters);
+    }
+
+    /**
+     * Method download serves as an alias for the rawClick method.
+     */
+    public function download(bool $status = false): self
+    {
+        return $this->rawClick($status);
+    }
+
+    /**
+     * @param array|string $name
+     * @param mixed        $parameters
+     * @param bool         $absolute
+     *
+     * @return $this
+     */
+    public function route($name, $parameters = [], $absolute = true): self
+    {
+        return $this->action(route($name, $parameters, $absolute));
     }
 }

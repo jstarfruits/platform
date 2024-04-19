@@ -146,15 +146,13 @@ class Upload extends Field
     }
 
     /**
-     * @param string $storage
-     *
      * @throws \Throwable
      *
      * @return $this
      */
     public function storage(string $storage): self
     {
-        $disk = config("filesystems.disks." . $storage);
+        $disk = config('filesystems.disks.'.$storage);
 
         throw_if($disk === null, 'The selected storage was not found');
 
@@ -165,10 +163,6 @@ class Upload extends Field
 
     /**
      * Set custom attachment upload path
-     *
-     * @param string $path
-     *
-     * @return self
      */
     public function path(string $path): self
     {

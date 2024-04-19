@@ -1,5 +1,6 @@
 @component($typeForm, get_defined_vars())
-    <div data-controller="datetime"
+    <div
+        data-controller="datetime"
          class="input-group"
         {{ $dataAttributes }}>
         <input type="text"
@@ -14,10 +15,16 @@
                 <a class="input-group-text h-100 text-muted"
                    title="clear"
                    data-action="click->datetime#clear">
-                        <x-orchid-icon path="cross" class="m-0 p-0"/>
+                        <x-orchid-icon path="bs.x-lg" class="m-0 p-0"/>
                     </a>
                 </div>
             @endif
+
+        @foreach($quickDates as $name => $value)
+            <label class="btn btn-default" data-action="click->datetime#setValue" data-value="{{ $value }}">
+                {{ $name }}
+            </label>
+        @endforeach
         </div>
 @endcomponent
 

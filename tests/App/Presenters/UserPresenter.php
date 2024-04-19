@@ -9,35 +9,23 @@ use Orchid\Screen\Contracts\Personable;
 use Orchid\Screen\Contracts\Searchable;
 use Orchid\Support\Presenter;
 
-class UserPresenter extends Presenter implements Searchable, Personable
+class UserPresenter extends Presenter implements Personable, Searchable
 {
-    /**
-     * @return string
-     */
     public function label(): string
     {
         return 'Users';
     }
 
-    /**
-     * @return string
-     */
     public function title(): string
     {
         return $this->entity->name;
     }
 
-    /**
-     * @return string
-     */
     public function subTitle(): string
     {
         return 'Administrator';
     }
 
-    /**
-     * @return string
-     */
     public function url(): string
     {
         return route('platform.systems.users.edit', $this->entity);
@@ -64,7 +52,7 @@ class UserPresenter extends Presenter implements Searchable, Personable
     /**
      * {@inheritdoc}
      */
-    public function searchQuery(string $query = null): Builder
+    public function searchQuery(?string $query = null): Builder
     {
         return $this->entity->search($query);
     }

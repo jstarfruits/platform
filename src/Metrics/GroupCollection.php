@@ -7,41 +7,38 @@ use Illuminate\Support\Collection;
 class GroupCollection extends Collection
 {
     /**
-     * @param \Closure|null $closure
+     * Formats the collection data into a format that can be used in a chart.
      *
-     * @return array
+     * @param \Closure|null $closure The closure that formats the label. It receives a string and returns a string.
+     *
+     * @return array A multidimensional array ready to be used in a chart.
      */
-    public function toChart(\Closure $closure = null): array
+    public function toChart(?\Closure $closure = null): array
     {
-        $closure = $closure ?? static function ($label) {
-            return $label;
-        };
+        // If the closure is not set, we define a default one that returns the original label.
+        $closure = $closure ?? static fn ($label) => $label;
 
         return $this
             ->sortByDesc('value')
             ->pluck('label')
-            ->map(function (string $name) use ($closure) {
-                return [
-                    'labels' => $this->pluck('label')->map($closure)->toArray(),
-                    'values' => $this->getChartsValues($name),
-                ];
-            })
+            ->map(fn (string $name) => [
+                'labels'  => $this->pluck('label')->map($closure)->toArray(),
+                'values'  => $this->getChartsValues($name),
+            ])
             ->toArray();
     }
 
     /**
-     * @param string $name
+     * Helper function for the toChart() method. It gets the chart values for a given label.
      *
-     * @return array
+     * @param string $name The label that we want to get the chart values for.
+     *
+     * @return array An array of values that will be used in the chart.
      */
     private function getChartsValues(string $name): array
     {
         return $this
-            ->map(static function ($item) use ($name) {
-                return $item->label === $name
-                    ? (int) $item->value
-                    : 0;
-            })
+            ->map(static fn ($item) => $item->label === $name ? (int) $item->value : 0)
             ->toArray();
     }
 }

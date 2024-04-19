@@ -43,10 +43,11 @@ class Select extends Field implements ComplexFieldConcern
      * @var array
      */
     protected $attributes = [
-        'class'      => 'form-control',
-        'options'    => [],
-        'allowEmpty' => '',
-        'allowAdd'   => false,
+        'class'        => 'form-control',
+        'options'      => [],
+        'allowEmpty'   => '',
+        'allowAdd'     => false,
+        'isOptionList' => false,
     ];
 
     /**
@@ -68,14 +69,18 @@ class Select extends Field implements ComplexFieldConcern
         'maximumSelectionLength',
     ];
 
+    public function __construct()
+    {
+        $this->addBeforeRender(function () {
+            $isOptionList = array_is_list((array) $this->get('options', []));
+            $this->set('isOptionList', $isOptionList);
+        });
+    }
+
     /**
      * @param string|Model $model
-     * @param string       $name
-     * @param string|null  $key
-     *
-     * @return self
      */
-    public function fromModel($model, string $name, string $key = null): self
+    public function fromModel($model, string $name, ?string $key = null): self
     {
         /* @var $model Model */
         $model = is_object($model) ? $model : new $model();
@@ -85,11 +90,39 @@ class Select extends Field implements ComplexFieldConcern
     }
 
     /**
-     * @param Builder|Model $model
-     * @param string        $name
-     * @param string        $key
+     * @param string      $enum
+     * @param string|null $displayName
+     *
+     * @throws \ReflectionException
      *
      * @return self
+     */
+    public function fromEnum(string $enum, ?string $displayName = null): self
+    {
+        $reflection = new \ReflectionEnum($enum);
+        $options = [];
+        foreach ($enum::cases() as $item) {
+            $key = $reflection->isBacked() ? $item->value : $item->name;
+            $options[$key] = is_null($displayName) ? __($item->name) : $item->$displayName();
+        }
+        $this->set('options', $options);
+
+        return $this->addBeforeRender(function () use ($reflection, $enum) {
+            $value = [];
+            collect($this->get('value'))->each(static function ($item) use (&$value, $reflection, $enum) {
+                if ($item instanceof $enum) {
+                    /** @var \UnitEnum $item */
+                    $value[] = $reflection->isBacked() ? $item->value : $item->name;
+                } else {
+                    $value[] = $item;
+                }
+            });
+            $this->set('value', $value);
+        });
+    }
+
+    /**
+     * @param Builder|Model $model
      */
     private function setFromEloquent($model, string $name, string $key): self
     {
@@ -112,26 +145,13 @@ class Select extends Field implements ComplexFieldConcern
         });
     }
 
-    /**
-     * @param Builder     $builder
-     * @param string      $name
-     * @param string|null $key
-     *
-     * @return self
-     */
-    public function fromQuery(Builder $builder, string $name, string $key = null): self
+    public function fromQuery(Builder $builder, string $name, ?string $key = null): self
     {
         $key = $key ?? $builder->getModel()->getKeyName();
 
         return $this->setFromEloquent($builder->get(), $name, $key);
     }
 
-    /**
-     * @param string $name
-     * @param string $key
-     *
-     * @return self
-     */
     public function empty(string $name = '', string $key = ''): self
     {
         return $this->addBeforeRender(function () use ($name, $key) {

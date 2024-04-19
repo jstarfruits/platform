@@ -13,6 +13,7 @@ use Orchid\Attachment\Models\Attachment;
 use Orchid\Platform\Models\User;
 use Orchid\Tests\TestUnitCase;
 use Orchid\Tests\Unit\Engine\CustomAttachmentGenerator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Class AttachmentTest.
@@ -99,7 +100,7 @@ class AttachmentTest extends TestUnitCase
 
         $this->assertTrue(Storage::disk($this->disk)->exists($upload->physicalPath()));
 
-        $path = $this->path . "/" . $upload->name.'.xml';
+        $path = $this->path.'/'.$upload->name.'.xml';
 
         $this->assertStringContainsString($path, $upload->physicalPath());
         $this->assertStringContainsString($path, $upload->url());
@@ -232,7 +233,8 @@ class AttachmentTest extends TestUnitCase
         $file = UploadedFile::fake()->create('relations');
         $upload = (new File($file, $this->disk))->load();
 
-        $model = new class extends Model {
+        $model = new class extends Model
+        {
             use Attachable;
         };
 
@@ -250,5 +252,43 @@ class AttachmentTest extends TestUnitCase
 
         $sql = $model->attachment('documents')->toSql();
         $this->assertStringContainsString(' "group" = ?', $sql);
+    }
+
+    public function testIsMimeAttachment()
+    {
+        $file = UploadedFile::fake()->create('is-mime.jpg');
+        $attachment = new File($file, $this->disk);
+        $upload = $attachment->load();
+
+        $this->assertTrue($upload->isMime('image/jpeg'));
+        $this->assertFalse($upload->isMime('image/png'));
+    }
+
+    public function testIsPhysicalExistAttachment()
+    {
+        $file = UploadedFile::fake()->create('isPhysical.jpg');
+        $attachment = new File($file, $this->disk);
+        $upload = $attachment->load();
+
+        $this->assertTrue($upload->isPhysicalExists());
+
+        $attachment = new Attachment([
+            'original_name' => 'photo.jpg',
+            'name'          => 'random',
+            'extension'     => 'jpg',
+            'disk'          => 'public',
+            'path'          => '2023/02/',
+        ]);
+
+        $this->assertFalse($attachment->isPhysicalExists());
+    }
+
+    public function testDownloadAttachment()
+    {
+        $file = UploadedFile::fake()->create('download.jpg');
+        $attachment = new File($file, $this->disk);
+        $upload = $attachment->load();
+
+        $this->assertTrue($upload->download() instanceof StreamedResponse);
     }
 }

@@ -37,8 +37,6 @@ class DropDown extends Action
 
     /**
      * @param Actionable[] $list
-     *
-     * @return DropDown
      */
     public function list(array $list): self
     {
@@ -46,13 +44,11 @@ class DropDown extends Action
     }
 
     /**
-     * @param Repository|null $repository
-     *
      * @throws \Throwable
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View|mixed
      */
-    public function build(Repository $repository = null)
+    public function build(?Repository $repository = null)
     {
         $this->set('source', $repository);
 

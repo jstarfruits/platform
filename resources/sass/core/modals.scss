@@ -15,9 +15,6 @@
     p {
       color: #8b91a0;
     }
-    .btn-close {
-      margin: 0 !important;
-    }
   }
   .modal-body {
     box-shadow: none;
@@ -153,6 +150,21 @@
         min-height: 100vh;
         border-radius: 0;
       }
+    }
+  }
+
+  .modal-placeholder {
+    display: none;
+  }
+
+  &.modal-loading {
+    .modal-placeholder{
+      display: block;
+      opacity: 1;
+    }
+
+    .modal-header, .modal-body, .modal-footer {
+      display: none;
     }
   }
 }

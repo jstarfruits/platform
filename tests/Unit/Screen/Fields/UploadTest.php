@@ -36,7 +36,6 @@ class UploadTest extends TestFieldsUnitCase
         $imagesGroup = Attachment::factory()->create(['group' => 'images']);
         $docsGroup = Attachment::factory()->create(['group' => 'docs']);
 
-
         $upload = Upload::make('file')->value([
             $docsGroup,
             $imagesGroup,
@@ -88,7 +87,7 @@ class UploadTest extends TestFieldsUnitCase
         $upload = $attachment->path($path)->load();
 
         $uploader = Upload::make('file')
-                    ->path($path);
+            ->path($path);
 
         $view = self::renderField($uploader);
 

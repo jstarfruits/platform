@@ -25,11 +25,8 @@ class Popover extends Component
 
     /**
      * Create a new component instance.
-     *
-     * @param string|null $content
-     * @param string      $placement
      */
-    public function __construct(string $content = null, string $placement = 'auto')
+    public function __construct(?string $content = null, string $placement = 'auto')
     {
         $this->content = $content;
         $this->placement = $placement;

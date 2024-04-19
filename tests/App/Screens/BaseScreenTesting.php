@@ -16,12 +16,8 @@ class BaseScreenTesting extends Screen
 {
     /**
      * Query data.
-     *
-     * @param User|null $user
-     *
-     * @return array
      */
-    public function query(User $user = null): array
+    public function query(?User $user = null): array
     {
         return [
             'user' => $user,
@@ -30,8 +26,6 @@ class BaseScreenTesting extends Screen
 
     /**
      * Display header name.
-     *
-     * @return string|null
      */
     public function name(): ?string
     {
@@ -63,21 +57,31 @@ class BaseScreenTesting extends Screen
         ];
     }
 
-    /**
-     * @param Request $request
-     */
     public function showToast(Request $request): void
     {
         Toast::warning($request->get('toast', 'Hello, world! This is a toast message.'));
     }
 
     /**
-     * @param Request $request
-     *
      * @return string
      */
     public function getUser(Request $request)
     {
         return $request->user()->toJson();
+    }
+
+    /**
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return void
+     */
+    public function methodWithValidation(Request $request): void
+    {
+        $request->validate([
+            'title' => 'required|max:255',
+            'body'  => 'required',
+        ]);
+
+        Toast::warning('Validation Success');
     }
 }

@@ -8,9 +8,10 @@
   line-height: normal;
   font-weight: normal;
   vertical-align: middle;
+  min-height: $input-height;
   @include transition(all 0.12s ease);
   @include box-shadow(none);
-  border-radius: 2px;
+  border-radius: 0.125rem;
   @include placeholder($text-muted);
   @include transition(background 0.2s linear 0s);
 
@@ -109,13 +110,13 @@ select {
 .form-label {
     display: block;
     margin-bottom: .375rem;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.875rem;
 }
 
 .picture-preview, .cropper-preview {
-    max-width: 600px;
-    max-height: 600px;
+    max-width: calc(var(--cropper-width, 600) * 1px);
+    max-height: calc(var(--cropper-height, 600) * 1px);
     object-fit: cover;
 }
 

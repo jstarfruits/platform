@@ -23,8 +23,6 @@ class SearchScreen extends Screen
 
     /**
      * Display header name.
-     *
-     * @return string|null
      */
     public function name(): ?string
     {
@@ -34,7 +32,6 @@ class SearchScreen extends Screen
     /**
      * Query data.
      *
-     * @param string $query
      *
      * @return array
      */
@@ -52,9 +49,7 @@ class SearchScreen extends Screen
         $results = $model->presenter()->searchQuery($query)->paginate();
 
         $results->getCollection()
-            ->transform(static function (Model $model) {
-                return $model->presenter();
-            });
+            ->transform(static fn (Model $model) => $model->presenter());
 
         return [
             'query'   => $query,
@@ -71,7 +66,7 @@ class SearchScreen extends Screen
     {
         return [
             Button::make(__('Apply'))
-                ->icon('filter')
+                ->icon('bs.funnel')
                 ->canSee(Dashboard::getSearch()->count() > 1)
                 ->method('changeSearchType'),
         ];
@@ -91,9 +86,6 @@ class SearchScreen extends Screen
         ];
     }
 
-    /**
-     * @param Request $request
-     */
     public function changeSearchType(Request $request)
     {
         $type = $request->get('type');
@@ -102,11 +94,9 @@ class SearchScreen extends Screen
     }
 
     /**
-     * @param string|null $query
-     *
      * @return Factory|View
      */
-    public function compact(string $query = null)
+    public function compact(?string $query = null)
     {
         $total = 0;
 
@@ -127,9 +117,7 @@ class SearchScreen extends Screen
                     ->paginate($presenter->perSearchShow());
 
                 $result->getCollection()
-                    ->transform(static function (Model $model) {
-                        return $model->presenter();
-                    });
+                    ->transform(static fn (Model $model) => $model->presenter());
 
                 if ($result->isEmpty()) {
                     return;
@@ -149,8 +137,6 @@ class SearchScreen extends Screen
     }
 
     /**
-     * @param Collection $searchModels
-     *
      * @return mixed
      */
     private function getSearchModel(Collection $searchModels)
@@ -158,9 +144,7 @@ class SearchScreen extends Screen
         $class = get_class($searchModels->first());
         $type = session()->get(self::SESSION_NAME, $class);
 
-        $model = $searchModels->filter(static function ($model) use ($type) {
-            return $model instanceof $type;
-        })->first();
+        $model = $searchModels->filter(static fn ($model) => $model instanceof $type)->first();
 
         abort_if($model === null, 404, 'Required search type not found');
 

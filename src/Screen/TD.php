@@ -40,6 +40,14 @@ class TD extends Cell
      */
     protected $width;
     /**
+     * @var string|null
+     */
+    protected $style;
+    /**
+     * @var string|null
+     */
+    protected $class;
+    /**
      * @var string
      */
     protected $filter;
@@ -70,16 +78,21 @@ class TD extends Cell
      */
     protected $defaultHidden = false;
     /**
-     * Possible options for filters if it's a select
+     * Possible options for filters if it's select
      *
      * @var array
      */
     protected $filterOptions = [];
 
     /**
-     * @param string|int $width
+     * Callable return filter value in column
      *
-     * @return TD
+     * @var callable
+     */
+    protected $callbackFilterValue;
+
+    /**
+     * @param string|int $width
      */
     public function width($width): self
     {
@@ -89,9 +102,27 @@ class TD extends Cell
     }
 
     /**
+     * @param string $style
+     */
+    public function style($style): self
+    {
+        $this->style = $style;
+
+        return $this;
+    }
+
+    /**
+     * @param string $class
+     */
+    public function class($class): self
+    {
+        $this->class = $class;
+
+        return $this;
+    }
+
+    /**
      * @param string|\Orchid\Screen\Field $filter
-     *
-     * @return TD
      */
     public function filterOptions(iterable $filterOptions): self
     {
@@ -100,15 +131,25 @@ class TD extends Cell
         return $this;
     }
 
-    /**
-     * @param string|\Orchid\Screen\Field $filter
-     *
-     * @return TD
-     */
-    public function filter($filter = self::FILTER_TEXT, iterable $options = null): self
+    public function filterValue(callable $callable): self
     {
-        if ($options) {
+        $this->callbackFilterValue = $callable;
+
+        return $this;
+    }
+
+    /**
+     * @param string                 $filter
+     * @param iterable|callable|null $options
+     */
+    public function filter($filter = self::FILTER_TEXT, $options = null): self
+    {
+        if (is_iterable($options)) {
             $this->filterOptions($options);
+        }
+
+        if (is_callable($options)) {
+            $this->callbackFilterValue = $options;
         }
 
         $this->filter = $filter;
@@ -116,11 +157,6 @@ class TD extends Cell
         return $this;
     }
 
-    /**
-     * @param bool $sort
-     *
-     * @return TD
-     */
     public function sort(bool $sort = true): self
     {
         $this->sort = $sort;
@@ -129,8 +165,6 @@ class TD extends Cell
     }
 
     /**
-     * @param string $align
-     *
      * @return $this
      */
     public function align(string $align): self
@@ -171,8 +205,6 @@ class TD extends Cell
     }
 
     /**
-     * @param int $colspan
-     *
      * @return $this
      */
     public function colspan(int $colspan): self
@@ -190,7 +222,7 @@ class TD extends Cell
     public function buildTh()
     {
         return view('platform::partials.layouts.th', [
-            'width'        => $this->width,
+            'width'        => is_numeric($this->width) ? $this->width.'px' : $this->width,
             'align'        => $this->align,
             'sort'         => $this->sort,
             'sortUrl'      => $this->buildSortUrl(),
@@ -208,7 +240,7 @@ class TD extends Cell
      */
     protected function buildFilter(): ?Field
     {
-        /** @var \Orchid\Screen\Field $filter */
+        /** @var \Orchid\Screen\Field $filter|string */
         $filter = $this->filter;
 
         if ($filter === null) {
@@ -222,36 +254,22 @@ class TD extends Cell
         return $filter->name("filter[$this->column]")
             ->placeholder(__('Filter'))
             ->form('filters')
-            ->value(
-                $this->isComplexFieldType($filter) ? get_filter_string($this->column) : get_filter($this->column)
-            )
+            ->value(get_filter($this->column))
             ->autofocus();
     }
 
     /**
-     * @param string $filter
-     *
      * @return \Orchid\Screen\Field
      */
     protected function detectConstantFilter(string $filter): Field
     {
-        switch ($filter) {
-            case self::FILTER_DATE_RANGE:
-                $input = DateRange::make();
-                break;
-            case self::FILTER_NUMBER_RANGE:
-                $input = NumberRange::make();
-                break;
-            case self::FILTER_SELECT:
-                $input = Select::make()->options($this->filterOptions)->multiple();
-                break;
-            case self::FILTER_DATE:
-                $input = DateTimer::make()->inline()->format('Y-m-d');
-                break;
-            default:
-                $input = Input::make()->type($filter);
-                break;
-        }
+        $input = match ($filter) {
+            self::FILTER_DATE_RANGE   => DateRange::make()->disableMobile(),
+            self::FILTER_NUMBER_RANGE => NumberRange::make(),
+            self::FILTER_SELECT       => Select::make()->options($this->filterOptions)->multiple(),
+            self::FILTER_DATE         => DateTimer::make()->inline()->format('Y-m-d'),
+            default                   => Input::make()->type($filter),
+        };
 
         return $input;
     }
@@ -272,21 +290,20 @@ class TD extends Cell
             'value'   => $value,
             'render'  => $this->render,
             'slug'    => $this->sluggable(),
-            'width'   => $this->width,
+            'width'   => is_numeric($this->width) ? $this->width.'px' : $this->width,
+            'style'   => $this->style,
+            'class'   => $this->class,
             'colspan' => $this->colspan,
         ]);
     }
 
-    /**
-     * @return bool
-     */
     public function isAllowUserHidden(): bool
     {
         return $this->allowUserHidden;
     }
 
     /**
-     * Builds item menu for show/hiden column.
+     * Builds an item menu for show/hiden column.
      *
      * @return Factory|View|null
      */
@@ -303,9 +320,6 @@ class TD extends Cell
         ]);
     }
 
-    /**
-     * @return string
-     */
     protected function sluggable(): string
     {
         return Str::slug($this->name);
@@ -313,10 +327,6 @@ class TD extends Cell
 
     /**
      * Prevents the user from hiding a column in the interface.
-     *
-     * @param bool $hidden
-     *
-     * @return TD
      */
     public function cantHide(bool $hidden = false): self
     {
@@ -326,8 +336,6 @@ class TD extends Cell
     }
 
     /**
-     * @param bool $hidden
-     *
      * @return $this
      */
     public function defaultHidden(bool $hidden = true): self
@@ -337,34 +345,25 @@ class TD extends Cell
         return $this;
     }
 
-    /**
-     * @return string
-     */
     public function buildSortUrl(): string
     {
         $query = request()->collect()->put('sort', revert_sort($this->column))->toArray();
 
-        return url()->current() . '?' . http_build_query($query);
+        return url()->current().'?'.http_build_query($query);
     }
 
     /**
      * @param TD[] $columns
-     *
-     * @return bool
      */
     public static function isShowVisibleColumns($columns): bool
     {
-        return collect($columns)->filter(function ($column) {
-            return $column->isAllowUserHidden();
-        })->isNotEmpty();
+        return collect($columns)->filter(fn ($column) => $column->isAllowUserHidden())->isNotEmpty();
     }
 
     /**
-     * Decides whether a filter can be provided with complex (array-like) value, or it needs a scalar one.
+     * Decides whether a filter can be provided with a complex (array-like) value, or it needs a scalar one.
      *
      * @param \Orchid\Screen\Field $field
-     *
-     * @return bool
      */
     protected function isComplexFieldType(Field $field): bool
     {
@@ -374,15 +373,22 @@ class TD extends Cell
     protected function buildFilterString(): ?string
     {
         $filter = get_filter($this->column);
+
+        if ($filter === null) {
+            return null;
+        }
+
+        if ($this->callbackFilterValue !== null) {
+            return call_user_func($this->callbackFilterValue, $filter);
+        }
+
         if (is_array($filter)) {
             if (isset($filter['start']) || isset($filter['end'])) {
-                return ($filter['start'] ?? "") . ' - ' . ($filter['end'] ?? "");
+                return ($filter['start'] ?? '').' - '.($filter['end'] ?? '');
             }
 
             if ($this->filterOptions) {
-                $filter = array_map(function ($val) {
-                    return $this->filterOptions[$val] ?? $val;
-                }, $filter);
+                $filter = array_map(fn ($val) => $this->filterOptions[$val] ?? $val, $filter);
             }
 
             return implode(', ', $filter);

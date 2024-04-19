@@ -34,7 +34,7 @@ use Throwable;
  */
 class Field implements Fieldable, Htmlable
 {
-    use CanSee, Makeable, Conditionable, Macroable {
+    use CanSee, Conditionable, Macroable, Makeable {
         Macroable::__call as macroCall;
     }
 
@@ -121,26 +121,24 @@ class Field implements Fieldable, Htmlable
     protected $inlineAttributes = [];
 
     /**
-     * @param string $name
-     * @param array  $arguments
+     * @param string $method
+     * @param array  $parameters
      *
-     * @return mixed|static
+     * @return $this|mixed|static|\Orchid\Screen\Field
      */
-    public function __call(string $name, array $arguments)
+    public function __call(string $method, array $parameters)
     {
-        if (static::hasMacro($name)) {
-            return $this->macroCall($name, $arguments);
+        if (static::hasMacro($method)) {
+            return $this->macroCall($method, $parameters);
         }
 
-        $arguments = collect($arguments)->map(static function ($argument) {
-            return $argument instanceof Closure ? $argument() : $argument;
-        });
+        $arguments = collect($parameters)->map(static fn ($argument) => $argument instanceof Closure ? $argument() : $argument);
 
-        if (method_exists($this, $name)) {
-            $this->$name($arguments);
+        if (method_exists($this, $method)) {
+            $this->$method($arguments);
         }
 
-        return $this->set($name, $arguments->first() ?? true);
+        return $this->set($method, $arguments->first() ?? true);
     }
 
     /**
@@ -154,8 +152,7 @@ class Field implements Fieldable, Htmlable
     }
 
     /**
-     * @param string $key
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return static
      */
@@ -174,9 +171,7 @@ class Field implements Fieldable, Htmlable
     protected function checkRequired(): self
     {
         collect($this->required)
-            ->filter(function ($attribute) {
-                return ! array_key_exists($attribute, $this->attributes);
-            })
+            ->filter(fn ($attribute) => ! array_key_exists($attribute, $this->attributes))
             ->each(function ($attribute) {
                 throw new FieldRequiredAttributeException($attribute);
             });
@@ -232,44 +227,33 @@ class Field implements Fieldable, Htmlable
         collect($this->attributes)
             ->intersectByKeys(array_flip($this->translations))
             ->each(function ($value, $key) use ($lang) {
-                $this->set($key, __($value, [], $lang));
+                $translation = __($value, [], $lang);
+                $this->set($key, is_string($translation) ? $translation : $value);
             });
 
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getAttributes(): array
     {
         return $this->attributes;
     }
 
-    /**
-     * @return ComponentAttributeBag
-     */
     protected function getAllowAttributes(): ComponentAttributeBag
     {
         $allow = array_merge($this->universalAttributes, $this->inlineAttributes);
 
         $attributes = collect($this->getAttributes())
-            ->filter(function ($value, $attribute) use ($allow) {
-                return Str::is($allow, $attribute);
-            })->toArray();
+            ->filter(fn ($value, $attribute) => Str::is($allow, $attribute))
+            ->toArray();
 
         return (new ComponentAttributeBag())
             ->merge($attributes);
     }
 
-    /**
-     * @return ComponentAttributeBag
-     */
     protected function getAllowDataAttributes(): ComponentAttributeBag
     {
-        return $this->getAllowAttributes()->filter(function ($value, $key) {
-            return Str::startsWith($key, 'data-');
-        });
+        return $this->getAllowAttributes()->filter(fn ($value, $key) => Str::startsWith($key, 'data-'));
     }
 
     /**
@@ -291,7 +275,6 @@ class Field implements Fieldable, Htmlable
     }
 
     /**
-     * @param string     $key
      * @param mixed|null $value
      *
      * @return static|mixed|null
@@ -301,29 +284,21 @@ class Field implements Fieldable, Htmlable
         return $this->attributes[$key] ?? $value;
     }
 
-    /**
-     * @return string
-     */
     protected function getSlug(): string
     {
         return Str::slug($this->get('name'));
     }
 
     /**
-     * @return mixed
+     * Get the old value of the field.
+     *
+     * @return float|int|mixed|string
      */
     public function getOldValue()
     {
-        $value = old($this->getOldName());
-
-        return is_numeric($value)
-            ? $value + 0
-            : $value;
+        return old($this->getOldName());
     }
 
-    /**
-     * @return string
-     */
     public function getOldName(): string
     {
         return (string) Str::of($this->get('name'))
@@ -347,9 +322,6 @@ class Field implements Fieldable, Htmlable
         return $this->set('class', $class.' is-invalid');
     }
 
-    /**
-     * @return bool
-     */
     private function hasError(): bool
     {
         return optional(session('errors'))->has($this->getOldName()) ?? false;
@@ -436,9 +408,7 @@ class Field implements Fieldable, Htmlable
      */
     public function withoutFormType(): self
     {
-        $this->typeForm = static function (array $attributes) {
-            return $attributes['slot'];
-        };
+        $this->typeForm = static fn (array $attributes) => $attributes['slot'];
 
         return $this;
     }
@@ -456,8 +426,6 @@ class Field implements Fieldable, Htmlable
     }
 
     /**
-     * @param Closure $closure
-     *
      * @return static
      */
     public function addBeforeRender(Closure $closure)
@@ -481,9 +449,6 @@ class Field implements Fieldable, Htmlable
         return $this;
     }
 
-    /**
-     * @return array
-     */
     private function getErrorsMessage(): array
     {
         $errors = session()->get('errors', new MessageBag());
@@ -493,8 +458,6 @@ class Field implements Fieldable, Htmlable
 
     /**
      * @throws Throwable
-     *
-     * @return string
      */
     public function __toString(): string
     {
@@ -514,14 +477,14 @@ class Field implements Fieldable, Htmlable
     /**
      * Apply the callback if the value is truthy.
      *
-     * @param bool     $value
+     * @param bool     $condition
      * @param callable $callback
      *
-     * @return static
+     * @return $this
      */
-    public function when(bool $value, callable $callback)
+    public function when(bool $condition, callable $callback)
     {
-        if ($value) {
+        if ($condition) {
             $callback($this);
         }
 

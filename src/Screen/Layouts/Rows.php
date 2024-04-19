@@ -34,8 +34,6 @@ abstract class Rows extends Layout
     protected $query;
 
     /**
-     * @param Repository $repository
-     *
      * @throws Throwable
      *
      * @return Factory|\Illuminate\View\View
@@ -56,12 +54,7 @@ abstract class Rows extends Layout
         ]);
     }
 
-    /**
-     * @param string|null $title
-     *
-     * @return Rows
-     */
-    public function title(string $title = null): self
+    public function title(?string $title = null): self
     {
         $this->title = $title;
 

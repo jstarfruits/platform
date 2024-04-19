@@ -107,37 +107,35 @@ class DashboardTest extends TestUnitCase
      */
     public function testIsMacro($name = 'customMarcoName'): void
     {
-        Dashboard::macro('returnNameMacroFunction', function (string $test) {
-            return $test;
-        });
+        Dashboard::macro('returnNameMacroFunction', fn (string $test) => $test);
 
         $this->assertEquals(Dashboard::returnNameMacroFunction($name), $name);
     }
 
-    public function testRegisterMenuElement():void
+    public function testRegisterMenuElement(): void
     {
         $dashboard = new Dashboard();
 
         $view = $dashboard
-            ->registerMenuElement(Dashboard::MENU_MAIN, Menu::make('Item 1')->sort(3))
-            ->registerMenuElement(Dashboard::MENU_MAIN, Menu::make('Item 2')->sort(2))
-            ->renderMenu(Dashboard::MENU_MAIN);
+            ->registerMenuElement(Menu::make('Item 1')->sort(3))
+            ->registerMenuElement(Menu::make('Item 2')->sort(2))
+            ->renderMenu();
 
         $this->assertStringContainsString('Item 2', $view);
         $this->assertStringContainsString('Item 1', $view);
         $this->assertTrue(Str::of($view)->after('Item 2')->contains('Item 1'));
     }
 
-    public function testAddMenuSubElements():void
+    public function testAddMenuSubElements(): void
     {
         $dashboard = new Dashboard();
 
         $view = $dashboard
-            ->registerMenuElement(Dashboard::MENU_MAIN, Menu::make('Item 1')->slug('item'))
-            ->addMenuSubElements(Dashboard::MENU_MAIN, 'item', [
+            ->registerMenuElement(Menu::make('Item 1')->slug('item'))
+            ->addMenuSubElements('item', [
                 Menu::make('Sub-element'),
             ])
-            ->renderMenu(Dashboard::MENU_MAIN);
+            ->renderMenu();
 
         $this->assertStringContainsString('Sub-element', $view);
     }

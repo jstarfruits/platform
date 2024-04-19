@@ -38,8 +38,6 @@ class Browsing extends Layout
     }
 
     /**
-     * @param Repository $repository
-     *
      * @return mixed
      */
     public function build(Repository $repository)
@@ -58,11 +56,9 @@ class Browsing extends Layout
     /**
      * Specifies a feature policy for the <iframe>.
      * The policy defines what features are available to the <iframe> based on the origin of the request
-     * (e.g. access to the microphone, camera, battery, web-share API, etc.).
-     *
-     * @param string|null $allow
+     * (e.g., access to the microphone, camera, battery, web-share API, etc.).
      */
-    public function allow(string $allow = null): Browsing
+    public function allow(?string $allow = null): Browsing
     {
         $this->variables['allow'] = $allow;
 
@@ -72,11 +68,10 @@ class Browsing extends Layout
     /**
      * Indicates how the browser should load the iframe
      *
-     * @param string|null $loading
      *
      * @return $this
      */
-    public function loading(string $loading = null): Browsing
+    public function loading(?string $loading = null): Browsing
     {
         $this->variables['loading'] = $loading;
 
@@ -86,11 +81,10 @@ class Browsing extends Layout
     /**
      * A Content Security Policy enforced for the embedded resource.
      *
-     * @param string|null $csp
      *
      * @return $this
      */
-    public function csp(string $csp = null): Browsing
+    public function csp(?string $csp = null): Browsing
     {
         $this->variables['csp'] = $csp;
 
@@ -100,11 +94,10 @@ class Browsing extends Layout
     /**
      * A targetable name for the embedded browsing context.
      *
-     * @param string|null $name
      *
      * @return $this
      */
-    public function name(string $name = null): Browsing
+    public function name(?string $name = null): Browsing
     {
         $this->variables['name'] = $name;
 
@@ -114,11 +107,10 @@ class Browsing extends Layout
     /**
      * Indicates which referrer to send when fetching the frame's resource.
      *
-     * @param string|null $referrerpolicy
      *
      * @return $this
      */
-    public function referrerpolicy(string $referrerpolicy = null): Browsing
+    public function referrerpolicy(?string $referrerpolicy = null): Browsing
     {
         $this->variables['referrerpolicy'] = $referrerpolicy;
 
@@ -129,11 +121,10 @@ class Browsing extends Layout
      * Applies extra restrictions to the content in the frame.
      * The value of the attribute can either be empty to apply all restrictions.
      *
-     * @param string|null $sandbox
      *
      * @return $this
      */
-    public function sandbox(string $sandbox = null): Browsing
+    public function sandbox(?string $sandbox = null): Browsing
     {
         $this->variables['sandbox'] = $sandbox;
 
@@ -144,7 +135,6 @@ class Browsing extends Layout
      * Applies extra restrictions to the content in the frame.
      * The value of the attribute can either be empty to apply all restrictions.
      *
-     * @param string $src
      *
      * @return $this
      */
@@ -158,7 +148,6 @@ class Browsing extends Layout
     /**
      * Inline HTML to embed, overriding the src attribute.
      *
-     * @param string $srcdoc
      *
      * @return $this
      */

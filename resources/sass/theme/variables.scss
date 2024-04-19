@@ -3,7 +3,7 @@ $orchid-color: #007bff; //#ac5ca0;
 
 
 $white: #ffffff;
-$black: #1c2b36;
+$black: #15141a;
 
 $blue: #007bff !default;
 $indigo: #6610f2 !default;
@@ -19,7 +19,7 @@ $cyan: #17a2b8 !default;
 $primary: $orchid-color;
 $secondary: #6c757d !default;
 $light: #f8f9fa !default;
-$dark: #212529 !default;
+$dark: #1c1b22;
 $grey: #495057;
 
 $grey-light: mix($grey, #ffffff, 10%);
@@ -37,8 +37,9 @@ $font-size-lg:                $font-size-base * 1.25;
 $link-color: darken($text-color, 15%);
 $link-hover-color: darken($text-color, 30%);
 
+$dropdown-bg: $white;
 $dropdown-border-radius: 0.35rem;
-$border-radius-base: 2px;
+$border-radius-base: 0.2rem;
 $border-color: darken($light, 5%);
 
 
@@ -51,6 +52,7 @@ $btn-default-border: $border-color;
 $btn-border-radius: $border-radius-base;
 $btn-close-focus-shadow: none;
 
+$input-height: 2.45rem;
 $input-border: darken($border-color, 5%);
 $input-border-focus: $cyan;
 $input-border-radius: $border-radius-base;
@@ -68,6 +70,7 @@ $nav-bg: lighten($light, 3%);
 $nav-bg-black: #313d4f;
 $badge-bg: darken($light, 10%);
 
+$list-group-bg: $white;
 $list-group-item-border: lighten($border-color, 3%);
 $list-group-item-hover: lighten($light, 3%);
 $list-group-item-focus: darken($light, 3%);
@@ -75,6 +78,7 @@ $list-group-select-color: #dbeef9;
 $list-group-active-color: $cyan;
 
 
+$table-bg: $white;
 $table-border-color: lighten($border-color, 2%);
 $table-group-separator-color: lighten($border-color, 2%);
 $table-striped-color: lighten($dark, 4.5%);
@@ -128,6 +132,8 @@ $border-radius-lg: 0.685rem;
 $border-radius-sm: .35rem;
 
 // Pagination
+$pagination-bg: $white;
+$pagination-disabled-bg: $white;
 $pagination-disabled-color: $text-muted;
 
 
@@ -138,8 +144,30 @@ $enable-responsive-font-sizes: true;
 // Navigation
 $nav-link-padding-y: .625rem;
 
+// Breadcrumbs
+$breadcrumb-active-color: #495057;
 
 // modals
 
+$modal-content-bg: $white;
 $modal-backdrop-opacity: .75;
 $modal-content-border-width: 0;
+
+
+$popover-bg: $white;
+
+
+$utilities: (
+    'line-clamp': (
+        property: -webkit-line-clamp,
+        class: line-clamp,
+        responsive: true,
+        values: (
+            1: 1,
+            2: 2,
+            3: 3,
+            4: 4,
+            5: 5,
+        ),
+    ),
+);

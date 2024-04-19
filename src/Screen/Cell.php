@@ -13,7 +13,7 @@ use Orchid\Support\Blade;
 
 abstract class Cell
 {
-    use Macroable, CanSee;
+    use CanSee, Macroable;
 
     /**
      * @var string
@@ -42,8 +42,6 @@ abstract class Cell
 
     /**
      * Cell constructor.
-     *
-     * @param string $name
      */
     public function __construct(string $name)
     {
@@ -52,12 +50,9 @@ abstract class Cell
     }
 
     /**
-     * @param string      $name
-     * @param string|null $title
-     *
      * @return static
      */
-    public static function make(string $name = '', string $title = null): self
+    public static function make(string $name = '', ?string $title = null): static
     {
         $td = new static($name);
         $td->column = $name;
@@ -66,24 +61,14 @@ abstract class Cell
         return $td;
     }
 
-    /**
-     * @param Closure $closure
-     *
-     * @return self
-     */
-    public function render(\Closure $closure): self
+    public function render(Closure $closure): static
     {
         $this->render = $closure;
 
         return $this;
     }
 
-    /**
-     * @param string $text
-     *
-     * @return self
-     */
-    public function popover(string $text): self
+    public function popover(string $text): static
     {
         $this->popover = $text;
 
@@ -91,9 +76,6 @@ abstract class Cell
     }
 
     /**
-     * @param string $component
-     * @param array  $params
-     *
      * @throws \ReflectionException
      *
      * @return string
@@ -106,35 +88,23 @@ abstract class Cell
         $paramsKeys = Arr::isAssoc($params) ? array_keys($params) : array_values($params);
 
         return collect($parameters)
-            ->filter(function (\ReflectionParameter $parameter) {
-                return ! $parameter->isOptional();
-            })
-            ->whenEmpty(function () use ($parameters) {
-                return collect($parameters);
-            })
-            ->map(function (\ReflectionParameter $parameter) {
-                return $parameter->getName();
-            })
+            ->filter(fn (\ReflectionParameter $parameter) => ! $parameter->isOptional())
+            ->whenEmpty(fn () => collect($parameters))
+            ->map(fn (\ReflectionParameter $parameter) => $parameter->getName())
             ->diff($paramsKeys)
             ->last();
     }
 
     /**
-     * @param string $component
-     * @param        $value
-     * @param array  $params
-     *
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      * @throws \ReflectionException
-     *
-     * @return string|null
      */
     protected function renderComponent(string $component, $value, array $params = []): ?string
     {
         [$class, $view] = Blade::componentInfo($component);
 
         if ($view === null) {
-            // for class based components try to detect argument name
+            // for class based components, try to detect argument name
             $nameArgument = $this->getNameParameterExpected($class, $params);
             if ($nameArgument !== null) {
                 $params[$nameArgument] = $value;
@@ -147,35 +117,55 @@ abstract class Cell
     }
 
     /**
-     * Pass the entire string to the component
+     * Renders the component with optional parameters.
      *
-     * @param string $component
-     * @param array  $params
+     * @param string $component The component to render.
+     * @param mixed  ...$params Optional parameters for the component.
      *
      * @return $this
      */
-    public function component(string $component, array $params = []): self
+    public function component(string $component, ...$params): static
     {
-        return $this->render(function ($value) use ($component, $params) {
-            return $this->renderComponent($component, $value, $params);
-        });
+        /** Backward compatibility workaround.
+         *
+         *  This block enables backward compatibility with previous versions
+         *  where passing parameters as an array was supported.
+         *
+         *  Example usage:
+         *  TD::make()->component(Any::class, ['param' => 'value'])
+         */
+        if (Arr::isList($params) && count($params) > 0) {
+            $params = Arr::first($params);
+        }
+
+        return $this->render(fn ($value) => $this->renderComponent($component, $value, $params));
+    }
+
+    /**
+     * Pass only the cell value to the component
+     *
+     * @throws \ReflectionException
+     *
+     * @return $this
+     */
+    public function asComponent(string $component, array $params = []): static
+    {
+        return $this->render(fn ($value) => $this->renderComponent($component, $value->getContent($this->name), $params));
     }
 
     /**
      * Pass only the cell value to the component
      *
      * @param string $component
-     * @param array  $params
+     * @param mixed  ...$params
      *
      * @throws \ReflectionException
      *
      * @return $this
      */
-    public function asComponent(string $component, array $params = []): self
+    public function usingComponent(string $component, ...$params): static
     {
-        return $this->render(function ($value) use ($component, $params) {
-            return $this->renderComponent($component, $value->getContent($this->name), $params);
-        });
+        return $this->asComponent($component, $params);
     }
 
     /**

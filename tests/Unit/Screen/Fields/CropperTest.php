@@ -17,9 +17,9 @@ class CropperTest extends TestFieldsUnitCase
     public function testInstance(): void
     {
         $picture = Cropper::make('picture')
-                ->width(1920)
-                ->height(1020)
-                ->value('https://example.com/img.jpg');
+            ->width(1920)
+            ->height(1020)
+            ->value('https://example.com/img.jpg');
 
         $view = self::renderField($picture);
 
@@ -58,5 +58,15 @@ class CropperTest extends TestFieldsUnitCase
 
         $this->assertStringContainsString(sprintf('data-cropper-path="%s"', $path), $view);
         $this->assertSame($upload->path, $path.'/');
+    }
+
+    public function testKeepOriginalType(): void
+    {
+        $picture = Cropper::make('picture')
+            ->keepOriginalType();
+
+        $view = self::renderField($picture);
+
+        $this->assertStringContainsString('data-cropper-keep-original-type-value="1"', $view);
     }
 }

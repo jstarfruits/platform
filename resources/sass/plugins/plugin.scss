@@ -6,6 +6,10 @@
   margin-bottom : 5px
 }
 
+.reorder-drag {
+    opacity: 0;
+}
+
 // input
 .chosen-choices, .chosen-single, .bootstrap-tagsinput {
   @extend .form-control;
@@ -126,6 +130,10 @@
   .CodeMirror{
     border: 1px solid $form-control-border-color;
   }
+
+  img {
+      max-width: 100%;
+  }
 }
 
 
@@ -150,12 +158,6 @@
 }
 
 // Flatpickr
-.dropdown{
-  .flatpickr-calendar{
-    box-shadow: none;
-  }
-}
-
 .flatpickr-wrapper{
   width: 100%;
 }
@@ -242,6 +244,16 @@
 // frappe-chart chart
 .graph-svg-tip {
   @extend .bg-dark;
+  @extend .rounded;
+}
+
+.chart-container .axis, .chart-container .chart-label {
+    color: $text-muted !important;
+}
+
+.legend-dataset-text {
+    color: $text-muted !important;
+    font-weight: 500 !important;
 }
 
 
@@ -255,8 +267,8 @@
 // toast
 .toast-wrapper {
   position: fixed;
-  top: 2em;
-  right: 2em;
+  top: 1.5em;
+  right: 1.5em;
   z-index: $zindex-fixed;
   width: 20em;
 }
@@ -270,6 +282,7 @@
     overflow: hidden;
 
     .toast {
+      backdrop-filter: blur(1em);
       max-width: 100vw;
       margin: 0 auto;
     }
@@ -309,4 +322,85 @@
 
 .d2-grid dd {
     grid-column: span 2 / span 2;
+}
+
+// Scroll to top
+.scroll-to-top {
+    opacity: 0;
+    /*transition: all 340ms;*/
+
+    &.show {
+        opacity: 1;
+    }
+}
+
+
+.profile-container {
+    background: rgb(19, 20, 21);
+    position: relative;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+
+    a, svg, span {
+        line-height: normal;
+    }
+}
+
+
+.attach {
+    .spinner-border {
+        display: none;
+    }
+
+    .attach-image {
+        object-fit: cover;
+        height: 12em;
+        width: 100%;
+        border: 1px solid #000;
+        position: relative;
+
+        &:before {
+            content:  " ";
+            display:  block;
+            position: absolute;
+            left:     0;
+            height:   100%;
+            width:    100%;
+            @extend .bg-light;
+        }
+
+        &:after {
+            content:         "🔗";
+            position:        absolute;
+            top:             0;
+            left:            0;
+            right:           0;
+            bottom:          0;
+            display:         flex;
+            align-items:     center;
+            justify-content: center;
+            width:           100%;
+            text-align:      center;
+            @extend .h3;
+        }
+    }
+
+    .attach-image-placeholder {
+        height: 12em;
+        display: flex;
+        cursor: pointer;
+        align-content: center;
+        align-items: center;
+    }
+
+    &[aria-busy='true'],
+    &:not([data-attach-loading-value='0']) {
+        .spinner-border {
+            display: inline-block;
+        }
+
+        .choose {
+            display: none !important;
+        }
+    }
 }
